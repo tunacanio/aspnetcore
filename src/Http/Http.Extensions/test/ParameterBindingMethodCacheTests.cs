@@ -321,10 +321,35 @@ public class ParameterBindingMethodCacheTests
     }
 
     [Fact]
+    public void HasBindAsyncMethod_ReturnsTrueForClassImplementingIBindableFromHttpContext()
+    {
+        var parameterInfo = GetFirstParameter((BindAsyncFromStaticAbstractInterface arg) => BindAsyncFromStaticAbstractInterfaceMethod(arg));
+        Assert.True(new ParameterBindingMethodCache().HasBindAsyncMethod(parameterInfo));
+    }
+
+    [Fact]
     public void FindBindAsyncMethod_FindsNonNullableReturningBindAsyncMethodGivenNullableType()
     {
         var parameterInfo = GetFirstParameter((BindAsyncStruct? arg) => BindAsyncNullableStructMethod(arg));
         Assert.True(new ParameterBindingMethodCache().HasBindAsyncMethod(parameterInfo));
+    }
+
+    [Fact]
+    public async Task FindBindAsyncMethod_FindsForClassImplementingIBindableFromHttpContext()
+    {
+        var parameterInfo = GetFirstParameter((BindAsyncFromStaticAbstractInterface arg) => BindAsyncFromStaticAbstractInterfaceMethod(arg));
+        var cache = new ParameterBindingMethodCache();
+        Assert.True(cache.HasBindAsyncMethod(parameterInfo));
+        var methodFound = cache.FindBindAsyncMethod(parameterInfo);
+
+        var parseHttpContext = Expression.Lambda<Func<HttpContext, ValueTask<object?>>>(methodFound.Expression!,
+            ParameterBindingMethodCache.HttpContextExpr).Compile();
+
+        var httpContext = new DefaultHttpContext();
+
+        var result = await parseHttpContext(httpContext);
+        Assert.NotNull(result);
+        Assert.IsType<BindAsyncFromStaticAbstractInterface>(result);
     }
 
     [Fact]
@@ -493,6 +518,8 @@ public class ParameterBindingMethodCacheTests
         Assert.NotNull(expression);
     }
 
+    
+
     enum Choice
     {
         One,
@@ -508,7 +535,6 @@ public class ParameterBindingMethodCacheTests
     private static void BindAsyncStructMethod(BindAsyncStruct arg) { }
     private static void BindAsyncNullableStructMethod(BindAsyncStruct? arg) { }
     private static void NullableReturningBindAsyncStructMethod(NullableReturningBindAsyncStruct arg) { }
-
     private static void BindAsyncSingleArgRecordMethod(BindAsyncSingleArgRecord arg) { }
     private static void BindAsyncSingleArgStructMethod(BindAsyncSingleArgStruct arg) { }
     private static void InheritBindAsyncMethod(InheritBindAsync arg) { }
@@ -520,6 +546,7 @@ public class ParameterBindingMethodCacheTests
     private static void BindAsyncFromInterfaceWithParameterInfoMethod(BindAsyncFromInterfaceWithParameterInfo args) { }
     private static void BindAsyncFallbackMethod(BindAsyncFallsBack? arg) { }
     private static void BindAsyncBadMethodMethod(BindAsyncBadMethod? arg) { }
+    private static void BindAsyncFromStaticAbstractInterfaceMethod(BindAsyncFromStaticAbstractInterface arg) { }
 
     private static ParameterInfo GetFirstParameter<T>(Expression<Action<T>> expr)
     {
@@ -1067,6 +1094,14 @@ public class ParameterBindingMethodCacheTests
 
         public static void BindAsync(HttpContext context)
             => throw new NotImplementedException();
+    }
+
+    private class BindAsyncFromStaticAbstractInterface : IBindableFromHttpContext<BindAsyncFromStaticAbstractInterface>
+    {
+        public static ValueTask<BindAsyncFromStaticAbstractInterface?> BindAsync(HttpContext context, ParameterInfo parameter)
+        {
+            return ValueTask.FromResult<BindAsyncFromStaticAbstractInterface?>(new());
+        }
     }
 
     private class MockParameterInfo : ParameterInfo
