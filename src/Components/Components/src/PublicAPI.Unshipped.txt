@@ -1,2 +1,18 @@
 #nullable enable
+Microsoft.AspNetCore.Components.ElementReference.ElementReference() -> void
+Microsoft.AspNetCore.Components.EventCallback.EventCallback() -> void
+Microsoft.AspNetCore.Components.EventCallback<TValue>.EventCallback() -> void
+Microsoft.AspNetCore.Components.EventCallbackWorkItem.EventCallbackWorkItem() -> void
+Microsoft.AspNetCore.Components.MarkupString.MarkupString() -> void
+Microsoft.AspNetCore.Components.ParameterValue.ParameterValue() -> void
+Microsoft.AspNetCore.Components.ParameterView.Enumerator.Enumerator() -> void
+Microsoft.AspNetCore.Components.ParameterView.ParameterView() -> void
+Microsoft.AspNetCore.Components.PersistingComponentStateSubscription.PersistingComponentStateSubscription() -> void
+Microsoft.AspNetCore.Components.RenderHandle.RenderHandle() -> void
 Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder.AddContent(int sequence, Microsoft.AspNetCore.Components.MarkupString? markupContent) -> void
+Microsoft.AspNetCore.Components.RenderTree.ArrayBuilderSegment<T>.ArrayBuilderSegment() -> void
+Microsoft.AspNetCore.Components.RenderTree.ArrayRange<T>.ArrayRange() -> void
+Microsoft.AspNetCore.Components.RenderTree.RenderBatch.RenderBatch() -> void
+Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiff.RenderTreeDiff() -> void
+Microsoft.AspNetCore.Components.RenderTree.RenderTreeEdit.RenderTreeEdit() -> void
+Microsoft.AspNetCore.Components.RenderTree.RenderTreeFrame.RenderTreeFrame() -> void

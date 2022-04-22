@@ -1,5 +1,8 @@
 #nullable enable
 Microsoft.AspNetCore.Http.RouteHandlerFilterExtensions
+Microsoft.AspNetCore.Routing.Matching.CandidateState.CandidateState() -> void
+Microsoft.AspNetCore.Routing.Matching.PolicyJumpTableEdge.PolicyJumpTableEdge() -> void
+Microsoft.AspNetCore.Routing.Matching.PolicyNodeEdge.PolicyNodeEdge() -> void
 Microsoft.AspNetCore.Routing.GroupRouteBuilder
 Microsoft.AspNetCore.Routing.GroupRouteBuilder.GroupPrefix.get -> Microsoft.AspNetCore.Routing.Patterns.RoutePattern!
 Microsoft.AspNetCore.Routing.RouteOptions.SetParameterPolicy(string! token, System.Type! type) -> void

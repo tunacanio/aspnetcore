@@ -1,3 +1,6 @@
 #nullable enable
 Microsoft.AspNetCore.Components.Forms.InputRadio<TValue>.Element.get -> Microsoft.AspNetCore.Components.ElementReference?
 Microsoft.AspNetCore.Components.Forms.InputRadio<TValue>.Element.set -> void
+Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest.ItemsProviderRequest() -> void
+Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TItem>.ItemsProviderResult() -> void
+Microsoft.AspNetCore.Components.Web.Virtualization.PlaceholderContext.PlaceholderContext() -> void

@@ -1,1 +1,14 @@
 #nullable enable
+Microsoft.AspNetCore.Mvc.ActionConstraints.ActionSelectorCandidate.ActionSelectorCandidate() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.EnumGroupAndName.EnumGroupAndName() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.ModelMetadataIdentity.ModelMetadataIdentity() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelBindingContext.NestedScope.NestedScope() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelBindingResult.ModelBindingResult() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary.Enumerator.Enumerator() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary.KeyEnumerable.KeyEnumerable() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary.KeyEnumerator.KeyEnumerator() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary.PrefixEnumerable.PrefixEnumerable() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary.ValueEnumerable.ValueEnumerable() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary.ValueEnumerator.ValueEnumerator() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidationEntry.ValidationEntry() -> void
+Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult.ValueProviderResult() -> void

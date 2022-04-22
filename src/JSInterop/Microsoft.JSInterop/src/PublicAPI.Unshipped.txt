@@ -1,1 +1,3 @@
 #nullable enable
+Microsoft.JSInterop.Infrastructure.DotNetInvocationInfo.DotNetInvocationInfo() -> void
+Microsoft.JSInterop.Infrastructure.DotNetInvocationResult.DotNetInvocationResult() -> void

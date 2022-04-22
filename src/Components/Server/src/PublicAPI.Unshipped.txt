@@ -1,1 +1,2 @@
 #nullable enable
+Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedBrowserStorageResult<TValue>.ProtectedBrowserStorageResult() -> void

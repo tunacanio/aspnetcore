@@ -1,4 +1,7 @@
 #nullable enable
+Microsoft.AspNetCore.WebUtilities.QueryStringEnumerable.EncodedNameValuePair.EncodedNameValuePair() -> void
+Microsoft.AspNetCore.WebUtilities.QueryStringEnumerable.Enumerator.Enumerator() -> void
+Microsoft.AspNetCore.WebUtilities.QueryStringEnumerable.QueryStringEnumerable() -> void
 override Microsoft.AspNetCore.WebUtilities.BufferedReadStream.WriteAsync(System.ReadOnlyMemory<byte> buffer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
 override Microsoft.AspNetCore.WebUtilities.FileBufferingReadStream.WriteAsync(System.ReadOnlyMemory<byte> buffer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
 override Microsoft.AspNetCore.WebUtilities.FileBufferingWriteStream.ReadAsync(System.Memory<byte> buffer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>

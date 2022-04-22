@@ -1,3 +1,6 @@
 #nullable enable
 *REMOVED*Microsoft.AspNetCore.Http.StreamResponseBodyFeature.StreamResponseBodyFeature(System.IO.Stream! stream, Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature! priorFeature) -> void
+Microsoft.AspNetCore.Http.FormCollection.Enumerator.Enumerator() -> void
+Microsoft.AspNetCore.Http.HeaderDictionary.Enumerator.Enumerator() -> void
+Microsoft.AspNetCore.Http.QueryCollection.Enumerator.Enumerator() -> void
 Microsoft.AspNetCore.Http.StreamResponseBodyFeature.StreamResponseBodyFeature(System.IO.Stream! stream, Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature? priorFeature) -> void
