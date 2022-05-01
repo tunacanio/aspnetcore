@@ -1,12 +1,13 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-namespace Microsoft.AspNetCore.Http.Result;
-
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit.Abstractions;
+
+namespace Microsoft.AspNetCore.Http.Result;
 
 public partial class ResultsOfTTests
 {
@@ -21,7 +22,7 @@ public partial class ResultsOfTTests
     public void GeneratedCodeIsUpToDate()
     {
         // This assumes the output is in the repo artifacts directory
-        var resultsOfTGeneratedPath = Path.Combine(AppContext.BaseDirectory, "Shared", "GeneratedContent", "ResultsOfT.cs");
+        var resultsOfTGeneratedPath = Path.Combine(AppContext.BaseDirectory, "Shared", "GeneratedContent", "ResultsOfT.Generated.cs");
         var testsGeneratedPath = Path.Combine(AppContext.BaseDirectory, "Shared", "GeneratedContent", "ResultsOfTTests.Generated.cs");
 
         var testResultsOfTGeneratedPath = Path.GetTempFileName();
@@ -37,7 +38,7 @@ public partial class ResultsOfTTests
             var testResultsOfTGenerated = File.ReadAllText(testResultsOfTGeneratedPath);
             var testTestsGenerated = File.ReadAllText(testTestsGeneratedPath);
 
-            AssertFileContentEqual(currentResultsOfTGenerated, testResultsOfTGenerated, "ResultsOfT.cs");
+            AssertFileContentEqual(currentResultsOfTGenerated, testResultsOfTGenerated, "ResultsOfT.Generated.cs");
             AssertFileContentEqual(currentTestsGenerated, testTestsGenerated, "ResultsOfTTests.Generated.cs");
         }
         finally
@@ -82,5 +83,15 @@ public partial class ResultsOfTTests
             _output.WriteLine(actual);
             throw;
         }
+    }
+
+    private static void PopulateMetadata<TTarget>(EndpointMetadataContext context) where TTarget : IEndpointMetadataProvider
+    {
+        TTarget.PopulateMetadata(context);
+    }
+
+    private class ResultTypeProvidedMetadata
+    {
+        public string SourceTypeName { get; init; }
     }
 }
