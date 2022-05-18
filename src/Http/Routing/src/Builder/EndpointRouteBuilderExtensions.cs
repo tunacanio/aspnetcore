@@ -568,25 +568,39 @@ public static class EndpointRouteBuilderExtensions
                 routeParams.Add(part.Name);
             }
 
-            var routeHandlerOptions = endpoints.ServiceProvider?.GetService<IOptions<RouteHandlerOptions>>();
-            var options = new RequestDelegateFactoryOptions
+            //var routeHandlerOptions = endpoints.ServiceProvider?.GetService<IOptions<RouteHandlerOptions>>();
+            //var options = new RequestDelegateFactoryOptions
+            //{
+            //    ServiceProvider = endpoints.ServiceProvider,
+            //    RouteParameterNames = routeParams,
+            //    ThrowOnBadRequest = routeHandlerOptions?.Value.ThrowOnBadRequest ?? false,
+            //    DisableInferBodyFromParameters = disableInferBodyFromParameters,
+            //    RouteHandlerFilterFactories = routeHandlerBuilder.RouteHandlerFilterFactories,
+            //    InitialEndpointMetadata = initialEndpointMetadata
+            //};
+            //var filteredRequestDelegateResult = RequestDelegateFactory.Create(handler, options);
+
+            //// Add request delegate metadata
+            //foreach (var metadata in filteredRequestDelegateResult.EndpointMetadata)
+            //{
+            //    endpointBuilder.Metadata.Add(metadata);
+            //}
+
+            endpointBuilder.RequestDelegate = httpContext =>
             {
-                ServiceProvider = endpoints.ServiceProvider,
-                RouteParameterNames = routeParams,
-                ThrowOnBadRequest = routeHandlerOptions?.Value.ThrowOnBadRequest ?? false,
-                DisableInferBodyFromParameters = disableInferBodyFromParameters,
-                RouteHandlerFilterFactories = routeHandlerBuilder.RouteHandlerFilterFactories,
-                InitialEndpointMetadata = initialEndpointMetadata
+                var routeHandlerOptions = httpContext.RequestServices.GetService<IOptions<RouteHandlerOptions>>();
+                var options = new RequestDelegateFactoryOptions
+                {
+                    ServiceProvider = httpContext.RequestServices,
+                    RouteParameterNames = routeParams,
+                    ThrowOnBadRequest = routeHandlerOptions?.Value.ThrowOnBadRequest ?? false,
+                    DisableInferBodyFromParameters = disableInferBodyFromParameters,
+                    RouteHandlerFilterFactories = httpContext.GetEndpoint()?.Metadata.OfType<Func<RouteHandlerContext, RouteHandlerFilterDelegate, RouteHandlerFilterDelegate>>().ToList(),
+                    InitialEndpointMetadata = initialEndpointMetadata
+                };
+                var filteredRequestDelegateResult = RequestDelegateFactory.Create(handler, options);
+                return filteredRequestDelegateResult.RequestDelegate(httpContext);
             };
-            var filteredRequestDelegateResult = RequestDelegateFactory.Create(handler, options);
-
-            // Add request delegate metadata
-            foreach (var metadata in filteredRequestDelegateResult.EndpointMetadata)
-            {
-                endpointBuilder.Metadata.Add(metadata);
-            }
-
-            endpointBuilder.RequestDelegate = filteredRequestDelegateResult.RequestDelegate;
         }
 
         return routeHandlerBuilder;
