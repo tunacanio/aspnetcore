@@ -17,14 +17,25 @@ string Plaintext() => "Hello, World!";
 app.MapGet("/plaintext", Plaintext);
 
 var nestedGroup = app.MapGroup("/group/{groupName}")
-   .MapGroup("/nested/{nestedName}")
-   .WithMetadata(new TagsAttribute("nested"));
+    .MapGroup("/nested/{nestedName}")
+    .WithMetadata(new TagsAttribute("nested"))
+    .AddFilter((context, next) =>
+    {
+        context.Arguments[0] = $"FILTERED {context.Arguments[0]}";
+        return next(context);
+    });
 
 nestedGroup
-   .MapGet("/", (string groupName, string nestedName) =>
-   {
-       return $"Hello from {groupName}:{nestedName}!";
-   });
+    .MapGet("/", (string groupName, string nestedName) =>
+    {
+        return $"Hello from {groupName}:{nestedName}!";
+    });
+
+nestedGroup
+    .MapGet("/foo", (string groupName, string nestedName) =>
+    {
+        return $"Hello from {groupName}:{nestedName}:foo!";
+    });
 
 object Json() => new { message = "Hello, World!" };
 app.MapGet("/json", Json).WithTags("json");
