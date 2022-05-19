@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Http;
@@ -41,13 +42,14 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
         private const byte ByteQuestionMark = (byte)'?';
         private const byte BytePercentage = (byte)'%';
         private const int MinTlsRequestSize = 1; // We need at least 1 byte to check for a proper TLS request line
+        private static readonly byte[] BytesCRLF = new[] { ByteCR, ByteLF };
 
         public bool ParseRequestLine(TRequestHandler handler, ref SequenceReader<byte> reader)
         {
             // Skip any leading \r or \n on the request line. This is not technically allowed,
             // but apparently there are enough clients relying on this that it's worth allowing.
             // Peek first as a minor performance optimization; it's a quick inlined check.
-            if (reader.TryPeek(out byte b) && (b == ByteCR || b == ByteLF))
+            if (reader.TryPeek(out var b) && (b == ByteCR || b == ByteLF))
             {
                 reader.AdvancePastAny(ByteCR, ByteLF);
             }
@@ -163,76 +165,27 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
         {
             while (!reader.End)
             {
-                var span = reader.UnreadSpan;
+                var eolSize = ParseHeaderLine(ref reader, out var span);
 
-                // Size of header in the current span, if known
-                var length = -1;
-
-                while (span.Length > 0)
+                if (eolSize == -1)
                 {
-                    // The size of the EOL terminator. Always -1 (no valid EOL), 1 (LF) or 2 (CRLF)
-                    var eolSize = -1;
+                    return false;
+                }
 
-                    // length can be set when the span is returned by ParseMultiSpanHeader
-                    if (length == -1)
-                    {
-                        length = span.IndexOfAny(ByteCR, ByteLF);
-                    }
+                var headerLength = span.Length - eolSize;
 
-                    if (length != -1)
-                    {
-                        // Validate the EOL terminator
-                        eolSize = ParseHeaderLineEnd(span, length);
+                // Empty header?
+                if (span.Length == eolSize)
+                {
+                    handler.OnHeadersComplete(endStream: false);
+                    return true;
+                }
 
-                        // Not valid
-                        if (eolSize == -1)
-                        {
-                            length = -1;
-                        }
-                    }
-
-                    // Empty header (EOL only)?
-                    if (length == 0)
-                    {
-                        handler.OnHeadersComplete(endStream: false);
-                        reader.Advance(eolSize);
-                        return true;
-                    }
-
-                    // If not found length will be -1; casting to uint will turn it to uint.MaxValue
-                    // which will be larger than any possible span.Length. This also serves to eliminate
-                    // the bounds check for the next lookup of span[length]
-                    if ((uint)length < (uint)span.Length)
-                    {
-                        var lineLength = length + eolSize;
-
-                        if (length != 0 && !TryTakeSingleHeader(handler, span[..length]))
-                        {
-                            // Sequence needs to be CRLF and not contain an inner CR not part of terminator.
-                            // Not parsable as a valid name:value header pair.
-                            RejectRequestHeader(span[..lineLength]);
-                        }
-
-                        // Read the header successfully, skip the reader forward past the headerSpan.
-                        span = span[lineLength..];
-                        reader.Advance(lineLength);
-                    }
-
-                    // End found in current span
-                    if (length > 0)
-                    {
-                        length = -1;
-                        continue;
-                    }
-
-                    // Load next header line to parse as a span
-                    span = ParseMultiSpanHeader(ref reader, out length);
-
-                    // If there any remaining line?
-                    if (length == -1 && span.Length == 0)
-                    {
-                        return false;
-                    }
+                if (!TryTakeSingleHeader(handler, span[..headerLength]))
+                {
+                    // Sequence needs to be CRLF and not contain an inner CR not part of terminator.
+                    // Not parsable as a valid name:value header pair.
+                    RejectRequestHeader(span);
                 }
             }
 
@@ -242,85 +195,59 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
         // Returns the length of the line terminator (CRLF = 2, LF = 1)
         // If no valid EOL is detected then -1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int ParseHeaderLineEnd(ReadOnlySpan<byte> headerSpan, int headerLineLength)
+        private int ParseHeaderLine(ref SequenceReader<byte> reader, out ReadOnlySpan<byte> span)
         {
-            // This method needs to be called with a positive value representing the index of either CR or LF
-            Debug.Assert(headerLineLength >= 0);
+            var currentSlice = reader.UnreadSequence;
 
-            if (headerSpan[headerLineLength] == ByteCR)
+            if (reader.TryReadToAny(out span, BytesCRLF, advancePastDelimiter: false))
             {
-                // No more chars after CR? Don't consume an incomplete header
-                if (headerSpan.Length == headerLineLength + 1)
+                reader.TryRead(out var ch1);
+
+                if (ch1 == ByteLF)
                 {
+                    // Include EOL in span
+                    span = currentSlice.Slice(0, span.Length + 1).ToSpan();
+
+                    if (!_enableLineFeedTerminator)
+                    {
+                        RejectRequestHeader(span);
+                    }
+
+                    return 1;
+                }
+
+                // ch1 == CR
+
+                if (reader.TryRead(out var ch2))
+                {
+                    // Include EOL in span
+                    span = currentSlice.Slice(0, span.Length + 2).ToSpan();
+
+                    // Not an LF after CR
+                    if (ch2 != ByteLF)
+                    {
+                        if (span.Length == 0)
+                        {
+                            KestrelBadHttpRequestException.Throw(RequestRejectionReason.InvalidRequestHeadersNoCRLF);
+                        }
+                        else
+                        {
+                            RejectRequestHeader(span);
+                        }
+                    }
+                    
+                    return 2; 
+                }
+                else
+                {
+                    // No more chars after CR? Don't consume an incomplete header
+
+                    reader.Rewind(span.Length + 1);
                     return -1;
                 }
-
-                // CR must be followed by LF in all cases
-                if (headerSpan[headerLineLength + 1] != ByteLF)
-                {
-                    if (headerLineLength == 0)
-                    {
-                        KestrelBadHttpRequestException.Throw(RequestRejectionReason.InvalidRequestHeadersNoCRLF);
-                    }
-                    else
-                    {
-                        RejectRequestHeader(headerSpan[..(headerLineLength + 2)]);
-                    }
-                }
-
-                return 2;
             }
 
-            if (_enableLineFeedTerminator)
-            {
-                return 1;
-            }
-
-            // LF but not allowed
-            RejectRequestHeader(headerSpan[..(headerLineLength + 1)]);
-
-            return 0;
-        }
-
-        // Returns a span from the remaining sequence until the next valid EOL
-        private ReadOnlySpan<byte> ParseMultiSpanHeader(ref SequenceReader<byte> reader, out int length)
-        {
-            length = -1;
-
-            var currentSlice = reader.UnreadSequence;
-            var lineEndPosition = currentSlice.PositionOfAny(ByteCR, ByteLF);
-
-            if (lineEndPosition == null)
-            {
-                return ReadOnlySpan<byte>.Empty;
-            }
-
-            SequencePosition lineEnd;
-            ReadOnlySpan<byte> headerSpan;
-            if (currentSlice.Slice(reader.Position, lineEndPosition.Value).Length == currentSlice.Length - 1)
-            {
-                // No enough data, so CRLF can't currently be there.
-                // However, we need to check the found char is CR and not LF (unless quirk mode)
-
-                // Advance 1 to include CR/LF in lineEnd
-                lineEnd = currentSlice.GetPosition(1, lineEndPosition.Value);
-                headerSpan = currentSlice.Slice(reader.Position, lineEnd).ToSpan();
-
-                if (headerSpan[^1] == ByteLF)
-                {
-                    length = headerSpan.Length - 1;
-                    return headerSpan;
-                }
-
-                return ReadOnlySpan<byte>.Empty;
-            }
-
-            // Advance 2 to include CR{LF?} in lineEnd
-            lineEnd = currentSlice.GetPosition(2, lineEndPosition.Value);
-            headerSpan = currentSlice.Slice(reader.Position, lineEnd).ToSpan();
-
-            length = headerSpan.Length - 2;
-            return headerSpan;
+            return -1;
         }
 
         private static bool TryTakeSingleHeader(TRequestHandler handler, ReadOnlySpan<byte> headerLine)
